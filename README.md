@@ -1,12 +1,19 @@
 # oe_bls
-The U.S. Bureau of Labor Statistic publishes several surveys that integrate Census and Economic 
-subjects
+---
+The U.S. Bureau of Labor Statistic (BLS) publishes several surveys that integrate Census and Economic subjects.
+This python module provides functions to access those surveys and the dimensions that support them.
+
 ---
 ## Consumer Expenditure Survey
-
-This publication coordinates with the US Census to follows thousands of American households to estimate national spending across a variety of categories.
 ---
-## Consumper Price Index
+The BLS is required by 
+
+
+
+
+
+---
+## Consumer Price Index
 
 For each spending category, the BLS estimates average prices to calculate price inflation in detail.
 

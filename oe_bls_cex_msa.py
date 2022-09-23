@@ -41,49 +41,6 @@ def oe_bls_cex_msa_download(years, regions, msadir, cexurl):
             wget.download(cexurl+'tables/geographic/mean/'+
                           'cu-msa-'+region+'-2-year-average-'+year+'.xlsx',
                       out=msadir,
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-# oe_bls_cex_pumd
-## Overview
----
-This process
-- downloads the MSA summary spreadsheets for a set of years
-- opens and combines them into pandas dataframe then
-- maps the rows to CEX variables
-
-The MSA level data are not geographically inclusive of the US population,
-and the BLS has only selected the larges 2 dozen MSAs,
-so this data may be only useful as providing a control to the model results.
-"""
-
-import pandas as pd
-import wget
-import zipfile
-import os
-from functools import reduce
-import warnings
-warnings.simplefilter("ignore")
-
-
-def oe_bls_cex_msa_download(years, regions, msadir, cexurl):
-    
-    # Avoid conflicts with any previously downloaded
-        
-    try:
-        os.mkdir(msadir)
-    except OSError as err:
-        print()
-        print("Destination directory '"+msadir+"already exists.")
-        print("Please remove it or select a new destination directory.")
-        print()
-        raise err
-
-    for year in years:
-        for region in regions:
-            wget.download(cexurl+'tables/geographic/mean/'+
-                          'cu-msa-'+region+'-2-year-average-'+year+'.xlsx',
-                      out=msadir,
                       bar=None)
     #For example:
     #    wget https://www.bls.gov/cex/tables/geographic/mean/cu-msa-midwest-2-year-average-2020.xlsx
@@ -128,10 +85,8 @@ def oe_bls_cex_msa_open(year, regions, msadir):
         
     """
 
-    # The reference sheets are found in the dir above the msadir
-    refdir = msadir[:msadir[:-2].rfind("\\")+1]
-    cexvariables = pd.read_excel(refdir + 'CEXVariables.xlsx')    
-    msacodes = pd.read_excel(refdir + 'MSACodes.xlsx')
+    cexvariables = pd.read_csv("https://raw.githubusercontent.com/OpenEnvironments/oe_bls/main/CEXVariables.csv")    
+    msacodes = pd.read_csv("https://raw.githubusercontent.com/OpenEnvironments/oe_bls/main/MSACodes.csv")
     
     filelist = []
     for region in regions:
@@ -148,12 +103,11 @@ def oe_bls_cex_msa_open(year, regions, msadir):
     msa = reduce(lambda left,right: 
                         pd.merge(left,right,on=['Item'], how='outer'), 
                         filelist)
-
-    # Replace the city names with CPI codes
+    
     msa.drop([c for c in msa.columns if "All consumer units in" in c],
              axis=1,
              inplace=True)
-    
+
     msadict = {}
     for i,m in msacodes.iterrows():
         msadict[m.Short] = m.Area
@@ -162,25 +116,10 @@ def oe_bls_cex_msa_open(year, regions, msadir):
             colcodes = ['Item']
         else:
             colcodes.append(msadict[msa.columns[i]])
-    msa.columns = colcodes
-    
-    msacoded = pd.merge(msa,cexvariables,left_on="Item",right_on="ReportTitle",how="inner")
 
-    return msacoded
+    msacoded = msa.copy()
+    msacoded.columns = colcodes
+    msacoded = pd.merge(msacoded,cexvariables,left_on="Item",right_on="ReportTitle",how="inner")
 
-if __name__ == "__main__":
-    
-    CEXURL = 'https://www.bls.gov/cex/'
-    MSADIR = "D:\\Open Environments\\data\\bls\\cex\\msa\\"
-
-    REGIONS = ['midwest','northeast','west','south']
-    YEARS = ['2016','2017','2018','2019','2020']
-    #YEARS = ["2018"] # ['2016','2017','2018','2019','2020']
-    
-    #oe_bls_cex_msa_download(years=YEARS, regions=REGIONS, msadir=MSADIR, cexurl=CEXURL)
-    
-    for year in YEARS:
-        df = oe_bls_cex_msa_open(year, regions=REGIONS, msadir=MSADIR)
-    
-    print("Done")
+    return msa,msacoded,cexvariables,msacodes
 

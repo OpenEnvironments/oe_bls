@@ -93,12 +93,11 @@ import os
 import warnings
 warnings.simplefilter("ignore")
 
-def oe_cex_pumd_download(years, pumddir = './pumd/', cexurl='https://www.bls.gov/cex/'):
+def oe_bls_cex_pumd_download(years, pumddir = './pumd/', cexurl='https://www.bls.gov/cex/'):
     """
     This function downloads the files, dictionaries and hierarchical groupings of in
     Bureau of Labor Statistics (BLS), Consumer Expenditure Survey's (CEX) Public Use 
-    Microsample Data (PUMD). Adjustments and corrections to this source are applied by
-    the related oe_cex_pumd_read function.
+    Microsample Data (PUMD).
         
     :param  years:    a list of 4 digit years that are strings like ['2018','2019','2020'] 
     :param  pumddir:  a string with the path destination of the download & unzipped files 
@@ -129,21 +128,21 @@ def oe_cex_pumd_download(years, pumddir = './pumd/', cexurl='https://www.bls.gov
             
     # also need the HG file.  It is a zip of all years.
     print('Downloading Hierarchical Grouping file')
-    wget.download(CEXURL+'pumd/stubs.zip', 
-                  out=PUMDDIR,
+    wget.download(cexurl+'pumd/stubs.zip', 
+                  out=pumddir,
                   bar=None)
-    with zipfile.ZipFile(PUMDDIR+'stubs.zip', 'r') as zip_ref:
-        zip_ref.extractall(PUMDDIR)
+    with zipfile.ZipFile(pumddir+'stubs.zip', 'r') as zip_ref:
+        zip_ref.extractall(pumddir)
 
     # Get the PUMD dictionary
     print('Getting the PUMD dictionary')
-    wget.download(CEXURL+'pumd/ce_pumd_interview_diary_dictionary.xlsx',
-                  out=PUMDDIR,
+    wget.download(cexurl+'pumd/ce_pumd_interview_diary_dictionary.xlsx',
+                  out=pumddir,
                   bar=None)
 
     return None
 
-def oe_cex_pumd_open_files(years, pumddir = './pumd/'):
+def oe_bls_cex_pumd_open_files(years, pumddir = './pumd/'):
     """
     This function reads the PUMD data files of the dataset into python data structures. 
 
@@ -164,11 +163,14 @@ def oe_cex_pumd_open_files(years, pumddir = './pumd/'):
     filereads = {}
     for t in filetypes:
         filereads[t] = []
-
+        
+    pumd = {}
+    
     for yr in years:
+        pumd[yr] = {}
         for fn in ('diary','intrvw'):
             print("Reading",yr,fn)
-            # Sometimes the intrv folder is in another subdir  intrvw17/intrvw17/*.csv eg
+            # Sometimes the intrv folder is in another subdir:  intrvw17/intrvw17/*.csv eg 
             if ((fn == 'intrvw') & (os.path.exists(pumddir+fn+yr[-2:]+ "\\"+fn+yr[-2:]+"\\"))):
                 folder = fn+yr[-2:]+ "\\"+fn+yr[-2:]+"\\"
             else:
@@ -176,22 +178,21 @@ def oe_cex_pumd_open_files(years, pumddir = './pumd/'):
             for f in os.listdir(pumddir+folder):
                 ftype = f[0:4]
                 if ftype in filetypes:
-                    fdf = pd.read_csv(pumddir+folder +f, dtype=object)
+                    fdf = pd.read_csv(pumddir+folder+f, dtype=object)
                     fdf.columns = [c.upper() for c in fdf.columns]
                     fdf["filename"] = f
                     fdf["year"] = yr
                     filereads[ftype].append(fdf)
-                    
-        pumd = {}
+
         for t in filetypes:
-            pumd[t] = pd.concat(filereads[t])   
+            pumd[yr][t] = pd.concat(filereads[t])   
     
     print('Reading the Hierarchical Groupings')
     # I'll use the Integrated HG.  Its mostly a superset of Interview & Diary HG less a dozen each
     hg = {}
     hgdtypes = {"linenum":int, "level":str, "title":str, "ucc":str, "survey":str, "factor":str, "group":str}
     for yr in years:
-        h = pd.read_fwf(PUMDDIR+'stubs\\CE-HG-Integ-'+yr+'.txt', index_col=False,
+        h = pd.read_fwf(pumddir+'stubs\\CE-HG-Integ-'+yr+'.txt', index_col=False,
         names = ["linenum", "level",  "title",  "ucc",     "survey",  "factor", "group"],
         colspecs = [(0, 3),  (3, 6),  (6, 69),  (69, 75),  (82, 85),  (85, 88), (88,95)],
         dtype=hgdtypes)    
@@ -203,13 +204,13 @@ def oe_cex_pumd_open_files(years, pumddir = './pumd/'):
      
     print('Reading the Dictionary')
     # The sheet names can varyin capitalization and include spaces
-    xl = pd.ExcelFile(PUMDDIR + 'ce_pumd_interview_diary_dictionary.xlsx')
+    xl = pd.ExcelFile(pumddir + 'ce_pumd_interview_diary_dictionary.xlsx')
     varsheet =  [c for c in xl.sheet_names if 'vari' in c.lower()][0]
     codesheet = [c for c in xl.sheet_names if 'code' in c.lower()][0]
 
-    vardict =   pd.read_excel(PUMDDIR + 'ce_pumd_interview_diary_dictionary.xlsx',
+    vardict =   pd.read_excel(pumddir + 'ce_pumd_interview_diary_dictionary.xlsx',
                               sheet_name = varsheet)
-    codedict =  pd.read_excel(PUMDDIR + 'ce_pumd_interview_diary_dictionary.xlsx',
+    codedict =  pd.read_excel(pumddir + 'ce_pumd_interview_diary_dictionary.xlsx',
                               sheet_name = codesheet)
 
     # filter the vardict sheet to only those where 
@@ -217,10 +218,10 @@ def oe_cex_pumd_open_files(years, pumddir = './pumd/'):
     
     return  pumd, hg, vardict, codedict
 
-def oe_cex_pumd_interpret_data(pumd, vardict, year):
+def oe_bls_cex_pumd_interpret_data(pumd, vardict, year, sumrules):
     """
     This function applies adjustments, logical rules and corrections to this source
-    are applied by the related oe_cex_pumd_read function.to PUMD data structures. 
+    are applied by the related oe_bls_cex_pumd_read function.to PUMD data structures. 
 
     :param  years: a list of 4 digit years that are strings     ['2018','2019','2020'] 
     :param  UCCs: a list of UCCs, six digit as strings     ['123456','234567','345678']
@@ -228,8 +229,9 @@ def oe_cex_pumd_interpret_data(pumd, vardict, year):
     pumdfiles: a dictionary, by year, with the file based dataframes
     hg: the Hierarchical Grouping table with linenum, level, title, survey, factor.
     vardict: provides a dictionary of the variables (not UCCs) in the PUMD
-    codedict: provides a table with a description for each coded value in the PUMD
-    
+    sumrules: a dataframe of each summary variable name, summary level and list of children 
+            columns to sum
+
     The processing logic replicates what the BLS' own SAS (& R) program does!
     See:    https://www.bls.gov/cex/pumd-getting-started-guide.htm
             https://www.bls.gov/cex/pumd/sas-ucc.zip
@@ -247,11 +249,11 @@ def oe_cex_pumd_interpret_data(pumd, vardict, year):
     print("Processing PUMD for", year)
 
     # Get family dataframes for Interview and Diary
-    fmli = pumd['fmli'][pumd['fmli'].year == year]
-    fmld = pumd['fmld'][pumd['fmld'].year == year]
+    fmli = pumd[year]['fmli']
+    fmld = pumd[year]['fmld']
     # Get member level dataframes
-    mtbi = pumd['mtbi'][pumd['mtbi'].year == year]
-    expd = pumd['expd'][pumd['expd'].year == year]
+    mtbi = pumd[year]['mtbi']
+    expd = pumd[year]['expd']
 
     # column name lists
     wtrep = [("WTREP"+str(i+1).zfill(2)) for i in range(44)]+["FINLWT21"] ## WTREP01-REPWT444 and FINL
@@ -326,41 +328,70 @@ def oe_cex_pumd_interpret_data(pumd, vardict, year):
     pubfile["COST"] = pubfile["COST"].astype(float).fillna(0)
     for i in range(45):
         pubfile[rcost[i]] = pubfile[wtrep[i]] * pubfile["COST"]
-    return pubfile, family, expend
+        
+    #
+    # TBD: summarize the pubfile, and apply the sumrules
+    #
+    
+    # 1. Start with a df that has CUID/NEWID, COST and UCC columns
+    # 2. Pivot this df so there's a column for each UCC value
+        # costs = df.pivot(index='NEWID', columns='UCC', values='COST')
+    # 3. Ensure that all the expected UCC columns are present
+    #   # for all the UCC variables, if the cost df is missing that var, costs[missingUCC] = 0
+    # 4. March from the lowest level upward
+        # for level in [9,8,7,6,5,4,3,2]:
+    #   costs[sumvar] = costs[sumrulescolumns].sum(axis=1)
+        
+    return pubfile, family, expend, fmli, fmld, mtbi, expd
 
-def oe_cex_pumd_interpret_meta(hg,vd,cd,year):
+def oe_bls_cex_pumd_interpret_meta(hg,vd,cd,year):
 
     print("Narrowing metadata to", year)
     
     # Interpret the Hierarchical Grouping
-    
-    # survey column:
-    #    I: Interview survey
-    #    D: Diary survey
-    #    G and T: Titles
-    #    S: Statistical UCCs
-
-    # group column
-    #    CUCHARS: CU characteristics
-    #    FOOD: Food expenditures
-    #    EXPEND: Non-food expenditures
-    #    INCOME: Income types
-    #    ASSETS: Asset types
-    #    ADDENDA: Other financial information and gifts
     h = hg[year]
+    
+    # Generate the summarization rules from HG
+    h["level"] = h["level"].astype(int)
+    sumdict = {}
+    sumrules = {}
+    for level in [9,8,7,6,5,4,3,2]:
+        for i,g in h[h.level.isin([level, level-1])].iterrows():        
+            if g.level == level-1:
+                rule = g.ucc
+                sumdict[rule] = level-1
+                sumrules[rule] = []
+            else:
+                sumrules[rule].append(g.ucc)
+
+    emptyrules = [r for r in sumrules.keys() if len(sumrules[r]) == 0]
+    for rule in emptyrules:
+        sumrules.pop(rule)
+        sumdict.pop(rule)
+
+    # Test the rules
+    for rule in sumrules.keys():
+        if (len(sumrules[rule]) > 0) & (rule.isnumeric()):
+            print('invalid rule',rule,': members but numeric')
+        if (len(sumrules[rule]) == 0) & (not rule.isnumeric()):
+            print('invalid rule',rule,': no members but not numeric')
+    # the rule level is needed so they can be applied bottom up
+    r = pd.DataFrame.from_dict({'name':  list(sumdict.keys()),
+                                'level': [sumdict[r] for r in sumdict.keys()],
+                                'rule':  [sumrules[r] for r in sumdict.keys()]})    
     
     # Interpret the Var Dictionary
     vd["Last year"] = vd["Last year"].fillna(datetime.now().year)
-    v = vd[(int(yr) >= vd["First year"] ) & (int(yr) <= vd["Last year"] )]
+    v = vd[(int(year) >= vd["First year"] ) & (int(year) <= vd["Last year"] )]
     
     # Interpret the Code Dictionary
     cd["Last year"] = cd["Last year"].fillna(datetime.now().year)
-    c = cd[(int(yr) >= cd["First year"] ) & (int(yr) <= cd["Last year"] )]
+    c = cd[(int(year) >= cd["First year"] ) & (int(year) <= cd["Last year"] )]
     
-    return h,v,c
+    return h,r,v,c
 
 
-def oe_cex_pumd_write(df, year):
+def oe_bls_cex_pumd_write(df, year):
     """
     This function writes a final dataframe to file.
     """
@@ -369,35 +400,4 @@ def oe_cex_pumd_write(df, year):
     return None
 
 
-if __name__ == "__main__":
-    
-    # Capitalized variables are globals or multi-year storage
-    # Lowercase variables are those for a given working year
-    
-    CEXURL = 'https://www.bls.gov/cex/'
-    PUMDDIR = "D:\\Open Environments\\data\\bls\\cex\\pumd\\"
-    YEARS = ["2018"] # ['2016','2017','2018','2019','2020']
-    
-    #oe_cex_pumd_download(YEARS, pumddir = PUMDDIR, cexurl=CEXURL)
-    
-    PUMD, HG, VARDICT, CODEDICT = oe_cex_pumd_open_files(YEARS, pumddir = PUMDDIR)
-    
-    for yr in YEARS: 
-        hg, vardict, codedict    = oe_cex_pumd_interpret_meta(HG,VARDICT,CODEDICT,yr)
-        pubfile, family, expend  = oe_cex_pumd_interpret_data(PUMD,VARDICT,yr)
-        oe_pumd_write(family,yr)
-        print(yr,family.shape)
 
-    # WTREP & REPWT   90 weighting columns
-    
-
-    # family.CUID & family.NEWID 
-    
-    # family.POPSIZE
-
-    # family.DIVISION
-    states = pd.read_csv("https://raw.githubusercontent.com/OpenEnvironments/core/main/states.csv")
-    divisions = states[['CensusDivisionName','CensusDivisionCode']].drop_duplicates().dropna()
-
-    # family.
-    print("Done")

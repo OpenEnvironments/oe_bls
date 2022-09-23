@@ -18,11 +18,9 @@ In its survey design, the BLS applies stratified sampling to ensure each consume
 
 ---
 ## Exploratory Data Analysis
-### Univariate
 
 
-
-## Overview
+### Overview
 ---
 
 The Consumer Expenditure Survey represents national estimates based upon two original
@@ -99,8 +97,6 @@ for that yy year across weighting attempts (WTREP1-44).  Then, each attempt to e
 population (REPWT) and cost (RCOST) and cost/pop and c/p per UCC has to reflect the 45
 original weighting attempts.
 
-Why not use the FINLWTyy to get single estimates of each?!
-
     pumdfiles: a dictionary, by year, with the file based dataframes
     hg: the Hierarchical Grouping table with linenum, level, title, survey, factor.
     vardict: provides a dictionary of the variables (not UCCs) in the PUMD
@@ -115,6 +111,55 @@ Why not use the FINLWTyy to get single estimates of each?!
             https://www.bls.gov/cex/pumd_doc.htm
             https://www.bls.gov/cex/csxintvw.pdf
             https://www.ilo.org/surveyLib/index.php/catalog/1193/download/8310
+
+
+### Hierarchical Grouping (HG)
+
+The CEX Survey prompts participants to report spending on detailed variables (UCCs).
+These are then subtotaled up to intermediate summary variables (FOOD, eg) and
+ultimately to TOTEXP.
+
+Hierarchical Group refers to this summary tree where the leaves are UCCs and the 
+nodes are variable names. The BLS offers three alternative views of this summary:
+"Diary", "Interview" and "Integrated".  
+
+The Hierarchical Grouping is downloaded as a single zip file that unzips into folder
+of fixed column width text files, for each year and each alternative summary. For
+example, the file named CE-HG-Diary-2020 provides the 2020 version of Diary groupings.
+
+Each file includes 7 columns:
+
+    "linenum":int   is all 1s except when the title text needs to wrap. Its a 2 when the row
+                    provides extra title text to be appended to the 1 row above it.
+                    
+    "level":int     Refers to the level of that variable in the grouping tree. A level 3
+                    variable followed by level 4 rows would indicate the parent child
+                    relationship until the next level 3 is encountered.
+                    
+    "title":str     Provides the description of the variable.
+
+    "ucc":str       Provides the UCC or variable name.
+    
+    "survey":str    Sets the source survel that collected that variable:
+                        I: Interview survey
+                        D: Diary survey
+                        G and T: Titles
+                        S: Statistical UCCs
+
+    "category":str  Defines the highest level category for each variable
+                        CUCHARS: CU characteristics
+                        FOOD: Food expenditures
+                        EXPEND: Non-food expenditures
+                        INCOME: Income types
+                        ASSETS: Asset types
+                        ADDENDA: Other financial information and gifts
+
+### Variable and Code Dictionaries
+
+
+
+
+
 
 
 ---

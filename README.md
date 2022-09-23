@@ -1,7 +1,8 @@
-# blockgroupspending
+## blockgroupspending
+---
 U.S. Consumer Expenditures by Census Block Groups
-## Opportunity
-
+### Opportunity
+---
 Americans express themselves in many ways, but critically in their 
 *income* and *spending* decisions. In th United States, the Bureau of Labor Statistics (BLS) is
 responsible for publishing its Consumer Expenditure Survey (https://www.bls.gov/cex/).
@@ -29,7 +30,7 @@ The dataset is published on Harvard's dataverse at https://dataverse.harvard.edu
 models' source are kept under version control in Open Environments repository at
 https://github.com/orgs/OpenEnvironments/blockgroupspending
 
-# Key Concepts
+### Key Concepts
 A BLS **Consumer Unit (CU)** refers to a group of people like to a Census Household.
 Technically, a CE includes families, roommates and other people who make group
 based spending decisions. 
@@ -42,6 +43,16 @@ only the largest MSAs are involved.
 
 Metropolitan Statistical Areas represent city geographies that may span both states and counties. The US Office
 of Management and Budget (OMB) defines 384 of these, but the BLS only uses a select two dozen largest cities.
+
+Survey participants sometimes respond with a singe purchase of two items. A person might purchase a shirt and
+some health items from a pharmacy. The BLS then needs to **allocate** the amount into separate variables.
+
+When selecting survey participants, the BLS uses stratified random sample. A simple random sample might
+have insufficient observations of race, age or family type. So, the BLS ensures a minimum occurrence of
+participants in these minority groups. This practice, however, means that the final collection does not 
+reflect the total population distributions. The solution is to add a **weight** to each input that represents
+the number of households that the input represents.
+
 
 ## Code
 - *MSA* downloads and combines the MSA level spreadsheets, by region, with states as columns in each.

@@ -110,7 +110,7 @@ def oe_bls_cex_msa_open(year, regions, msadir):
 
     msadict = {}
     for i,m in msacodes.iterrows():
-        msadict[m.Short] = m.Area
+        msadict[m.Short] = m["CPI Area"]
     for i in range(msa.shape[1]):
         if i == 0:
             colcodes = ['Item']
@@ -122,4 +122,19 @@ def oe_bls_cex_msa_open(year, regions, msadir):
     msacoded = pd.merge(msacoded,cexvariables,left_on="Item",right_on="ReportTitle",how="inner")
 
     return msa,msacoded,cexvariables,msacodes
+
+if __name__ == "__main__":
+    
+    CEXURL = 'https://www.bls.gov/cex/'
+    MSADIR = "D:\\Open Environments\\data\\bls\\cex\\msa\\"
+
+    REGIONS = ['midwest','northeast','west','south']
+    YEARS = ['2016','2017','2018','2019','2020']
+    
+    #oe_bls_cex_msa_download(years=YEARS, regions=REGIONS, msadir=MSADIR, cexurl=CEXURL)
+    
+    for year in YEARS:
+        msa,msacoded,cexvariables,msacodes = oe_bls_cex_msa_open(year, regions=REGIONS, msadir=MSADIR)
+    
+    print("Done")
 

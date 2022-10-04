@@ -1,86 +1,20 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# oe_bls_cex_pumd
-## Overview
----
+The US Bureau of Labor Statistics publishes the Pubmic Use Microdata (PUMD) to support
+deeper analysis of its Consumer Expenditure Survey. This module provides functions for 
+downloading PUMD data and its metadata. It also applies business rules for interpreting
+this dataset.
+    
+    oe_bls_cex_pumd_download          - retrieves the PUMD files from the BLS to a new folder
+    oe_bls_cex_pumd_open_files        - opens the downloaded files into python dataframes
+    oe_bls_cex_pumd_interpret_meta    - selects a request year of the Variable Dictionary and Historical Grouping
+    oe_bls_cex_pumd_interpret_data    - applies rule to combine the FMLI, FMLD, MTBI and EXPD files
+        oe_bls_cex_pumd_flags         - applies flag column rules to fmli, fmld
+        oe_bls_cex_pumd_select        - For fmli & fmld, this selects demog, geog and expenditure cols of interest
+    oe_bls_cex_pumd_write             - stores the resulting data structures to pcikle files
 
-The Consumer Expenditure Survey represents national estimates based upon two original
-data collections: a Quarterly Interview Survey (Interview) and a Diary Survey (Diary).
-Ensuring confidentiality prohibits publication of all, identifiable data inputs.
-However, the BLS shares a sizeable sample of these sources, anonymized, called Public 
-Use Microdata (PUMD).
-
-## Concepts & Glossary
-
-The Interview data has quarterly observations on each CU, while the Diary data is 
-collected online bi-weekly.  So the PUMD datasets include a NEWID key that is the CU
-identifier (CUID) suffixed by the observation. For interview data, the last digit 
-ranges quarters (1,2,3,4) and for diary entries ranges biweek (1,2).
-
-The PUMD includes a dimension of population density. First, CUs are split into Urban
-vs Outside Urban. Urban CUs are then split into includes a categorical variable called
-**popsize** or "Population Size Area" (PSA) which yields:
-- Outside urban area
-- All urban consumer units
-- Less than 100,000
-- 100,000 to 249,999
-- 250,000 to 999,999
-- 1,000,000 to 2,499,999
-- 2,500,000 to 4,999,999
-- 5,000,000 and more
-
-The PUMD is published as sets of SAS, STAT or csv files.
-This processing uses the csv file format.
-
-The lowest level of detail collected in the PUMD is assigned a Universal
-Classification Code (UCC), a six digit string left padded with zeros. The
-BLS also uses these categories of spending for its Consumer Price Inflation (CPI)
-publication.
-
-For the PUMD, the UCC details are aggregated in to tree of subtotalling variables,
-in a stucture called the hierarchical grouping (HG). The HG has three forms for the 
-Interview, Diary and 'Integrated' view of the PUMD data. The lowest level nodes on the
-HG are UCCs themselves. For example, the UCCs for cookies ('020510') and crackers 
-('20610') are subtotaled to the variable "CRAKCOOK". 
-
-At the highest level, the HG sums into four sections:
-- Consumer unit characteristics like number of people, age of the reference person
-- Demographics like race, ethnicity, education
-- Incomes and Taxes
-- Spending (finally) also called Average Annual Expenditures
-This last, largest group of variables has its first level of detail such as Food,
-Housing, Transportation and Health care.
-
-The PUMD data is distributed by year, in quarterly files that have one of these formats:
-  Diary Files
-    FMLD - characteristics, income, weights, and summary level expenditures for the CU.
-    MEMD - characteristics and income for each member in the CU.
-    EXPD - a detailed weekly expenditure file categorized by UCC.
-    DTBD - a detailed annual income file categorized by UCC.
-    DTID - a Consumer Unit imputed income file categorized by UCC.
-  Interview Files
-    FMLI - characteristics, income, weights, and summary level expenditures for the CU.
-    MEMI - characteristics and income for each member in the CU.
-    MTBI - a detailed monthly expenditure file categorized by UCC.
-    ITBI - a Consumer Unit monthly income file categorized by UCC.
-    ITII - a Consumer Unit monthly imputed income file categorized by UCC.4
-    NTAXI - a file with federal and state tax information for each tax unit in the CU.5
-
-While these are many, the BLS shares some programming that focuses on just four. The
-'family' data are keyed by Consumer Unit (CU) from each of the interview and diary sets
-(FMLI & FMLD).  The UCC level spending details are found in (EXPD & MTBI)
-
----
-## Bugs & Issues
-- One year has two columns were lowercase
-- In 2018, vars were renamed
-
-
----
-## Citations
-Public Use Microdata (PUMD) https://www.bls.gov/cex/pumd_data.htm
-
+The final section of this files demonstrates these functions for working examples.
 
 """
 
@@ -241,7 +175,7 @@ def oe_bls_cex_pumd_interpret_data(pumd, vardict, year, sumrules):
             https://www.bls.gov/cex/pumd_doc.htm
             https://www.bls.gov/cex/csxintvw.pdf
 
-    :return family:  a dataframe keyed by CU (NEWID) 
+    :return family:  a dataframe keyed by NEWID
     :return expend:  a dataframe keyed by CU & UCC 
     :return pubfile: a join between family, expend 
     """
@@ -262,8 +196,6 @@ def oe_bls_cex_pumd_interpret_data(pumd, vardict, year, sumrules):
 
     # Process Family
 
-    fmli["source"] = 'I'
-
     def mo_scope(row):
         if   (row["QINTRVMO"] in ['01','02','03']) & (row["QINTRVYR"]==year):
             return (int(row["QINTRVMO"]) - 1)
@@ -273,50 +205,36 @@ def oe_bls_cex_pumd_interpret_data(pumd, vardict, year, sumrules):
             return 3
 
     fmli['mo_scope'] = fmli.apply(mo_scope, axis=1)
-
+    fmli["source"] = 'I'
     for i in range(45):
+        fmli[wtrep[i]] = fmli[wtrep[i]].replace('.',np.nan)
         fmli[wtrep[i]] = fmli[wtrep[i]].astype(float).fillna(0)
         fmli[repwt[i]] = (fmli[wtrep[i]] * fmli["mo_scope"]) / 12
 
     fmld["source"] = "D"
     fmld["mo_scope"] = 3
     for i in range(45):
+        fmld[wtrep[i]] = fmld[wtrep[i]].replace('.',np.nan)
         fmld[wtrep[i]] = fmld[wtrep[i]].astype(float).fillna(0)    
         fmld[repwt[i]] = (fmld[wtrep[i]] * fmld["mo_scope"]) / 12
 
     fmli = fmli.reset_index()
     fmld = fmld.reset_index()
+    
+    oe_bls_cex_pumd_process_flags(fmli,"FMLI",vardict)
+    oe_bls_cex_pumd_process_flags(fmld,"FMLD",vardict)
+
     fmlcols = ([c for c in fmli.columns if c in fmld.columns]) # 272 columns
     family = pd.concat([fmli[fmlcols],fmld[fmlcols]], axis=0)
-
-    # Process flag fields   _ values of A,B,C are NAs
-    print("Processing flag fields")
-    def flag_NAs(row,flagged,flagcol):
-        if row[flagcol] in ["A","B","C"]:
-            return np.NaN
-        else:
-            return row[flagged]
-        return None
-
-    flags = {}
-    flag_candidates = vardict[["Variable Name","Flag name"]][~vardict["Flag name"].isna()].drop_duplicates()
-    for i,r in flag_candidates.iterrows():
-        if (r["Variable Name"] in family.columns) & (r["Flag name"] in family.columns):
-            flags[r["Variable Name"]] = r["Flag name"]
-
-    for col in flags.keys():
-        print("    ",col,"flagged by",flags[col])
-        family[col[:-1]] = family.apply(lambda row: flag_NAs(row,col,flags[col]), axis=1)
-
-    family.drop([c for c in flags.values()], axis=1, inplace=True)
-    fmlcols = family.columns  # reset this list
-
+    
+    
     # Process Expend
 
     mtbi["source"] = "I"
     mtbi = mtbi[(mtbi["REF_YR"] == year) & (mtbi["PUBFLAG"] == "2")]
 
     expd["source"] = "D"
+    
     expd["COST"] = pd.to_numeric(expd["COST"], errors='coerce')
     expd["COST"] = expd["COST"].astype(float).fillna(0) * 13
     expd = expd[expd["PUB_FLAG"] == "2"]
@@ -343,6 +261,40 @@ def oe_bls_cex_pumd_interpret_data(pumd, vardict, year, sumrules):
     #   costs[sumvar] = costs[sumrulescolumns].sum(axis=1)
         
     return pubfile, family, expend, fmli, fmld, mtbi, expd
+
+
+def oe_bls_cex_pumd_flag_NAs(row,flagged,flagcol):
+    """
+    Process flag fields ensuring A,B,C are NAs
+    Called by the oe_bls_cex_pumd_process_flags
+    Initially this is a simple rule, but this function provides a placeholder
+    for more complex use of the PUMD Variable Dictionary 
+    """
+    if row[flagcol] in ["A","B","C"]:
+        return np.NaN
+    else:
+        return row[flagged]
+    return None
+
+
+def oe_bls_cex_pumd_process_flags(df,filename,vd):
+    """
+    PUMD variables may be accompanied by a sister flag column that indicates
+    how missing and top/bottom coded values should be handled.
+    This function applies flag rules to a dataframe then drops the flag columns.
+    """
+    print("Processing flags for",filename)
+    flags = {}
+    flag_candidates = vd[["Variable Name","Flag name"]][~vd["Flag name"].isna()][vd["File"] == filename].drop_duplicates()
+    for i,r in flag_candidates.iterrows():
+        if (r["Variable Name"] in df.columns) & (r["Flag name"] in df.columns):
+            flags[r["Variable Name"]] = r["Flag name"]
+    for col in flags.keys():
+        print("    ",col,"flagged by",flags[col])
+        df[col[:-1]] = df.apply(lambda row: oe_bls_cex_pumd_flag_NAs(row,col,flags[col]), axis=1)
+    df.drop([c for c in flags.values()], axis=1, inplace=True)
+    return df
+
 
 def oe_bls_cex_pumd_interpret_meta(hg,vd,cd,year):
 
@@ -400,4 +352,23 @@ def oe_bls_cex_pumd_write(df, year):
     return None
 
 
+if __name__ == "__main__":
+    
+    # Capitalized variables are globals or multi-year storage
+    # Lowercase variables are those for a given working year
+    
+    CEXURL = 'https://www.bls.gov/cex/'
+    PUMDDIR = "D:\\Open Environments\\data\\bls\\cex\\pumd\\"
+    YEARS = ['2018'] #['2016','2017','2018','2019','2020']
+    
+    oe_bls_cex_pumd_download(YEARS, pumddir = PUMDDIR, cexurl=CEXURL)
+    
+    PUMD, HG, VARDICT, CODEDICT = oe_bls_cex_pumd_open_files(YEARS, pumddir = PUMDDIR)
+    
+    for yr in YEARS: 
+        hg, sumrules, vardict, codedict    = oe_bls_cex_pumd_interpret_meta(HG,VARDICT,CODEDICT,yr)
+        pubfile, family, expend, fmli, fmld, mtbi, expd  = \
+            oe_bls_cex_pumd_interpret_data(PUMD,VARDICT,yr,sumrules)
+        oe_bls_cex_pumd_write(family,yr)
 
+    print("Done")

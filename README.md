@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ## blockgroupspending
 ---
 U.S. Consumer Expenditures by Census Block Groups
@@ -59,25 +58,4 @@ the number of households that the input represents.
 - *MSA* downloads and combines the MSA level spreadsheets, by region, with states as columns in each.
 - *PUMD* downloads, reads and interprets the PUMD datasets by year.
 - *models* contains the projection and penetration models, applies them and writes results to csv file.
-=======
-# oe_bls
----
-The U.S. Bureau of Labor Statistic (BLS) publishes several surveys that integrate Census and Economic subjects.
-This python module provides functions to access those surveys and the dimensions that support them.
-
----
-## Consumer Expenditure Survey
----
-The BLS is required by 
-
-
-
-
-
----
-## Consumer Price Index
-
-For each spending category, the BLS estimates average prices to calculate price inflation in detail.
-
->>>>>>> 1af90dd871048042d84b92f8c788230b8cc6ec53
 

@@ -1,0 +1,37 @@
+﻿MSA Code,MSA Name,MSA Definition (State and County),MSA Population
+S11A,"Boston-Cambridge-Newton, MA-NH","MA: Essex, Middlesex, Norfolk, Plymouth, Suffolk","4,552,402"
+,,"NH: Rockingham, Strafford",
+S12A,"New York-Newark-Jersey City, NY-NJ-PA","NJ: Bergen, Essex, Hudson, Hunterdon, Middlesex, Monmouth, Morris, Ocean, Passaic, Somerset, Sussex, Union","19,567,410"
+,,"NY: Bronx, Dutchess, Kings, Nassau, New York, Orange, Putnam, Queens, Richmond, Rockland, Suffolk, Westchester",
+,,PA: Pike,
+S12B,"Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",DE: New Castle,"5,965,343"
+,,MD: Cecil,
+,,"NJ: Burlington, Camden, Gloucester, Salem",
+,,"PA: Bucks, Chester, Delaware, Montgomery, Philadelphia",
+S23A,"Chicago-Naperville-Elgin, IL-IN-WI","IL: Cook, De Kalb, Du Page, Grundy, Kane, Kendall, Lake, McHenry, Will","9,461,105"
+,,"IN: Jasper, Lake, Newton, Porter",
+,,WI: Kenosha,
+S23B,"Detroit-Warren-Dearborn, MI","MI: Lapeer, Livingston, Macomb, Oakland, St. Clair, Wayne","4,296,250"
+S24A,"Minneapolis-St. Paul-Bloomington, MN-WI","MN: Anoka, Carver, Chisago, Dakota, Hennepin, Isanti, Le Sueur, Mille Lacs, Ramsey, Scott, Sherburne, Sibley, Washington, Wright","3,348,859"
+,,"WI: Pierce, St. Croix",
+S24B,"St. Louis, MO-IL","IL: Bond, Calhoun, Clinton, Jersey, Macoupin, Madison, Monroe, St. Clair","2,787,701"
+,,"MO: Franklin, Jefferson, Lincoln, St. Charles, St. Louis, St. Louis City, Warren",
+S35A,"Washington-Arlington-Alexandria, DC-VA-MD-WV",DC: District of Columbia,"5,636,232"
+,,"MD: Calvert, Charles, Frederick, Montgomery, Prince George’s",
+,,"VA: Alexandria City, Arlington, Clarke, Culpeper, Fairfax, Fairfax City, Falls Church City, Fauquier, Fredericksburg City, Loudoun, Manassas City, Manassas Park City, Prince William, Rappahannock, Spotsylvania, Stafford, Warren",
+,,WV: Jefferson,
+S35B,"Miami-Fort Lauderdale-West Palm Beach, FL","FL: Broward, Miami-Dade, Palm Beach","5,564,635"
+S35C,"Atlanta-Sandy Springs-Roswell, GA","GA: Barrow, Bartow, Butts, Carroll, Cherokee, Clayton, Cobb, Coweta, Dawson, DeKalb, Douglas, Fayette, Forsyth, Fulton, Gwinnett, Haralson, Heard, Henry, Jasper, Lamar, Meriwether, Morgan, Newton, Paulding, Pickens, Pike, Rockdale, Spalding, Walton","5,286,728"
+S35D,"Tampa-St. Petersburg-Clearwater, FL","FL: Hernando, Hillsborough, Pasco, Pinellas","2,783,243"
+S35E,"Baltimore-Columbia-Towson, MD","MD: Anne Arundel, Baltimore, Baltimore City, Carroll, Harford, Howard, Queen Anne’s","2,710,489"
+S37A,"Dallas-Fort Worth-Arlington, TX","TX: Collin, Dallas, Denton, Ellis, Hood, Hunt, Johnson, Kaufman, Parker, Rockwall, Somervell, Tarrant, Wise","6,426,214"
+S37B,"Houston-The Woodlands-Sugar Land, TX","TX: Austin, Brazoria, Chambers, Fort Bend, Galveston, Harris, Liberty, Montgomery, Waller","5,920,416"
+S48A,"Phoenix-Mesa-Scottsdale, AZ","AZ: Maricopa, Pinal","4,192,887"
+S48B,"Denver-Aurora-Lakewood, CO","CO: Adams, Arapahoe, Broomfield, Clear Creek, Denver, Douglas, Elbert, Gilpin, Jefferson, Park","2,543,482"
+S49A,"Los Angeles-Long Beach-Anaheim, CA","CA: Los Angeles, Orange","12,828,837"
+S49B,"San Francisco-Oakland-Hayward, CA","CA: Alameda, Contra Costa, Marin, San Francisco, San Mateo","4,335,391"
+S49C,"Riverside-San Bernardino-Ontario, CA","CA: Riverside, San Bernardino","4,224,851"
+S49D,"Seattle-Tacoma-Bellevue, WA","WA: King, Pierce, Snohomish","3,439,809"
+S49E,"San Diego-Carlsbad, CA",CA: San Diego,"3,095,313"
+S49F,"Honolulu, HI",HI: Honolulu,"953,207"
+S49G,"Anchorage, AK","AK: Anchorage, Matanuska-Susitna","380,821"
